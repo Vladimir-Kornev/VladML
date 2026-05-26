@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>kornev_v — model card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  // Persisted tweak defaults — host rewrites this block on disk
+  window.__TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "#d4a445",
+    "theme": "dark",
+    "grid": true,
+    "density": "comfortable"
+  }/*EDITMODE-END*/;
+</script>
+
+<style>
+:root {
+  --bg:        #0b0c0e;
+  --bg-2:      #0f1115;
+  --panel:     #14171c;
+  --panel-2:   #1a1e24;
+  --line:      rgba(255,255,255,0.07);
+  --line-2:    rgba(255,255,255,0.13);
+  --text:      #e6e3d8;
+  --text-2:    #b9b6ad;
+  --dim:       #6f6e66;
+  --mute:      #4a4a45;
+  --accent:    #d4a445;
+  --accent-2:  #e8c275;
+  --ok:        #6ab04c;
+  --teal:      #5db3b3;
+  --magenta:   #c87dc8;
+  --warn:      #c87a4b;
+
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --sans: "Space Grotesk", system-ui, sans-serif;
+
+  --gap: clamp(20px, 4vw, 56px);
+}
+
+[data-theme="light"] {
+  --bg:        #f3f1ea;
+  --bg-2:      #ebe9e1;
+  --panel:     #ebe8df;
+  --panel-2:   #e2dfd4;
+  --line:      rgba(0,0,0,0.08);
+  --line-2:    rgba(0,0,0,0.16);
+  --text:      #14110d;
+  --text-2:    #3a362e;
+  --dim:       #6b6357;
+  --mute:      #9a9285;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* dot grid */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(var(--line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -12px -12px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+body.no-grid::before { display: none; }
+main, header.bar, .footer-bar, .crosshair, #tweaks { position: relative; z-index: 1; }
+
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+.mono { font-family: var(--mono); }
+.dim  { color: var(--dim); }
+.muted{ color: var(--mute); }
+
+/* ============ TOP STATUS BAR ============ */
+header.bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px clamp(16px, 3vw, 32px);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border-bottom: 1px solid var(--line);
+  color: var(--text-2);
+}
+.bar-l, .bar-r { display: flex; gap: 24px; align-items: center; }
+.bar .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ok); margin-right: 6px;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ok) 22%, transparent);
+  animation: pulse 2.4s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.bar .sep { color: var(--mute); }
+.bar a { color: var(--text-2); }
+.bar a:hover { color: var(--accent); }
+.bar a.active { color: var(--accent); }
+.bar-nav { display: flex; gap: 18px; }
+.bar .id-pill { color: var(--accent); }
+@media (max-width: 760px) {
+  .bar-nav, .bar-l .latlong, .bar-r .build { display: none; }
+}
+
+/* ============ LAYOUT ============ */
+main {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 56px var(--gap) 0;
+}
+.crosshair { /* corner ticks at section starts */
+  position: relative;
+}
+.crosshair::before, .crosshair::after {
+  content: "+";
+  position: absolute;
+  font-family: var(--mono); color: var(--mute);
+  font-size: 14px; line-height: 1;
+}
+.crosshair::before { top: -4px; left: -8px; }
+.crosshair::after  { top: -4px; right: -8px; }
+
+/* ============ HERO ============ */
+#hero { padding: 88px 0 64px; position: relative; }
+
+.h-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 28px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.h-meta-row b { color: var(--text); font-weight: 500; }
+.h-meta-row .tag {
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+  color: var(--accent);
+  padding: 2px 8px;
+  border: 1px solid color-mix(in oklab, var(--accent) 38%, transparent);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: clamp(24px, 4vw, 56px);
+}
+@media (max-width: 980px) { .hero-grid { grid-template-columns: 1fr; } }
+
+.h-pretitle {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 18px;
+}
+.h-pretitle .arrow { color: var(--accent); }
+
+.h-name {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: clamp(2.8rem, 7vw, 5.2rem);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.h-name .accent { color: var(--accent); }
+.h-name .blink {
+  display: inline-block;
+  width: 0.42em; height: 0.85em;
+  background: var(--accent);
+  vertical-align: -8%;
+  margin-left: 6px;
+  animation: blink 1.1s steps(2,end) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.h-role {
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: var(--text-2);
+  margin-bottom: 28px;
+  display: flex; gap: 12px; flex-wrap: wrap;
+  align-items: center;
+}
+.h-role .pipe { color: var(--mute); }
+.h-role .badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border: 1px solid var(--line-2);
+  color: var(--text-2);
+}
+
+/* config block */
+.h-config {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.9;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  padding: 18px 22px;
+  margin-bottom: 28px;
+  max-width: 640px;
+  color: var(--text-2);
+  position: relative;
+}
+.h-config .head {
+  position: absolute; top: -10px; left: 16px;
+  background: var(--bg); padding: 0 8px;
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--dim);
+}
+.h-config .k { color: var(--dim); }
+.h-config .v { color: var(--text); }
+.h-config .s { color: var(--accent); }
+.h-config .c { color: var(--mute); }
+
+.h-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 18px;
+  background: var(--text);
+  color: var(--bg);
+  border: 1px solid var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s, color 0.2s;
+}
+.btn:hover { background: var(--accent); border-color: var(--accent); color: #0b0c0e; }
+.btn:hover .b-arr { transform: translate(3px, -3px); }
+.btn .b-arr { display: inline-block; transition: transform 0.25s; }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line-2); }
+.btn.ghost:hover { background: var(--panel-2); color: var(--text); border-color: var(--text); }
+
+/* hero right column */
+.h-right {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.figure {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  position: relative;
+}
+.figure header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.figure header .title { color: var(--text); }
+.figure header .meta { color: var(--mute); }
+
+.portrait-fig img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-position: center top;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.06);
+}
+.portrait-fig footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-top: 1px solid var(--line);
+}
+.portrait-fig footer .cap { color: var(--text-2); }
+
+/* ============ STAT STRIP ============ */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-top: 48px;
+}
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+.stat {
+  padding: 22px 20px;
+  border-left: 1px dashed var(--line);
+}
+.stat:first-child { border-left: none; }
+.stat .label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.stat .num {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-top: 8px;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.stat .num .u {
+  font-size: 0.5em; color: var(--dim); letter-spacing: 0;
+}
+.stat .sparkline {
+  margin-top: 10px;
+  display: block;
+  height: 26px;
+}
+.stat .delta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ok);
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+@media (max-width: 760px) {
+  .stat:nth-child(3) { border-top: 1px dashed var(--line); border-left: none; }
+  .stat:nth-child(4) { border-top: 1px dashed var(--line); }
+}
+
+/* ============ SECTION HEADERS ============ */
+section.sec { padding: clamp(72px, 9vw, 120px) 0; }
+.sec-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+.sec-head .l { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+.sec-head .num {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.sec-head h2 {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: -0.02em;
+}
+.sec-head h2 em {
+  font-style: normal;
+  font-family: var(--mono);
+  color: var(--dim);
+  font-weight: 400;
+  font-size: 0.7em;
+  letter-spacing: 0;
+}
+.sec-head .r {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+/* ============ ABOUT ============ */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: clamp(24px, 4vw, 56px);
+}
+@media (max-width: 900px) { .about-grid { grid-template-columns: 1fr; } }
+
+.about-prose p {
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--text-2);
+  margin-bottom: 18px;
+  max-width: 56ch;
+}
+.about-prose p:first-child {
+  font-size: 1.2rem;
+  color: var(--text);
+}
+.about-prose p strong, .about-prose p b { color: var(--text); font-weight: 500; }
+.about-prose .accent-text { color: var(--accent); }
+
+/* profile card */
+.profile-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.profile-card header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.profile-card .row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  gap: 14px;
+  align-items: center;
+}
+.profile-card .row:last-child { border-bottom: none; }
+.profile-card .row .k {
+  color: var(--dim);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.profile-card .row .v {
+  color: var(--text);
+  font-size: 13px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.profile-card .row .v .ok { color: var(--ok); }
+.profile-card .row .v .tag {
+  padding: 2px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+/* activity heatmap */
+.heatmap {
+  margin-top: 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 16px;
+}
+.heatmap-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.heatmap-head .t { color: var(--text); }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(26, 1fr);
+  gap: 3px;
+}
+.hm-cell {
+  aspect-ratio: 1;
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+  border-radius: 1px;
+}
+
+/* ============ WORK / EXPERIMENTS ============ */
+.work-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.work-table thead th {
+  text-align: left;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.work-row td {
+  vertical-align: top;
+  padding: 22px 14px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--sans);
+}
+.work-row:hover { background: color-mix(in oklab, var(--panel) 60%, transparent); }
+.work-row td.id { font-family: var(--mono); font-size: 12px; color: var(--accent); white-space: nowrap; }
+.work-row td.id .yr { color: var(--dim); display: block; font-size: 10.5px; margin-top: 3px; letter-spacing: 0.1em; }
+.work-row td.name {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 1.05rem;
+  color: var(--text);
+  line-height: 1.3;
+}
+.work-row td.name .desc {
+  font-family: var(--sans);
+  font-weight: 400;
+  display: block;
+  color: var(--text-2);
+  font-size: 0.9rem;
+  margin-top: 6px;
+  max-width: 42ch;
+}
+.work-row td.stack { font-family: var(--mono); font-size: 11px; color: var(--text-2); line-height: 1.8; }
+.work-row td.stack .chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border: 1px solid var(--line-2);
+  margin: 0 4px 4px 0;
+  color: var(--text-2);
+}
+.work-row td.metric {
+  min-width: 160px;
+  font-family: var(--mono);
+}
+.metric-label { font-size: 10px; color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; }
+.metric-val { font-size: 16px; color: var(--text); margin-top: 2px; }
+.metric-val .delta { color: var(--ok); font-size: 11px; margin-left: 4px; }
+.metric-bar { display: block; margin-top: 8px; height: 28px; width: 140px; }
+.work-row td.status .pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.pill.live { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 60%, transparent); }
+.pill.dev  { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 60%, transparent); }
+.pill.beta { color: var(--teal); border-color: color-mix(in oklab, var(--teal) 60%, transparent); }
+.work-row td.go { text-align: right; }
+.work-row td.go .arr {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border: 1px solid var(--line-2);
+  color: var(--text-2);
+  font-family: var(--mono);
+  transition: all 0.2s;
+}
+.work-row:hover td.go .arr { background: var(--accent); border-color: var(--accent); color: #0b0c0e; }
+
+/* Mobile: collapse table to cards */
+@media (max-width: 900px) {
+  .work-table thead { display: none; }
+  .work-table, .work-table tbody, .work-row, .work-row td { display: block; width: 100%; }
+  .work-row { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .work-row td { padding: 6px 0; border: none; }
+}
+
+/* ============ STACK (proficiency bars) ============ */
+.stack-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+@media (max-width: 800px) { .stack-grid { grid-template-columns: 1fr; } }
+.stack-cell {
+  padding: 24px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.stack-cell h3 {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 12px;
+}
+.stack-cell h3 .id {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.14em; color: var(--dim);
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  font-weight: 400;
+}
+.stack-cell p {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--text-2);
+  margin-bottom: 16px;
+  max-width: 42ch;
+}
+.skill-bar {
+  display: grid;
+  grid-template-columns: 1fr 60px 100px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px dashed var(--line);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.skill-bar:first-of-type { border-top: 1px solid var(--line); }
+.skill-bar .name { color: var(--text); }
+.skill-bar .pct { color: var(--dim); font-size: 11px; text-align: right; }
+.skill-bar .track {
+  height: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+}
+.skill-bar .fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: var(--accent);
+  background-image: linear-gradient(90deg, var(--accent), var(--accent) 60%, var(--accent-2));
+}
+
+/* CEFR-style language bars */
+.langs {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 760px) { .langs { grid-template-columns: 1fr; } }
+.lang {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 18px;
+}
+.lang .ln {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text);
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.lang .ln .iso { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.lang .level {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 2px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cefr {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-top: 14px;
+}
+.cefr .seg {
+  height: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.cefr .seg.on { background: var(--accent); border-color: var(--accent); }
+.cefr .seg.half { background: linear-gradient(90deg, var(--accent) 50%, var(--panel-2) 50%); }
+.cefr-labels {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--mute);
+  text-align: center;
+}
+
+/* ============ CONTACT ============ */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: clamp(24px, 4vw, 56px);
+  align-items: stretch;
+}
+@media (max-width: 900px) { .contact-grid { grid-template-columns: 1fr; } }
+
+.contact-prose .big {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+.contact-prose .big em {
+  font-style: normal;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+
+.email-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--text);
+  font-family: var(--mono);
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  color: var(--text);
+  transition: color 0.2s, border-color 0.2s;
+}
+.email-line:hover { color: var(--accent); border-color: var(--accent); }
+
+.contact-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 22px;
+  line-height: 1.9;
+}
+.contact-card .ck { color: var(--dim); }
+.contact-card .cv { color: var(--text); }
+.contact-card .cv a { color: var(--accent); border-bottom: 1px dashed color-mix(in oklab, var(--accent) 50%, transparent); }
+.contact-card .head {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 12px;
+}
+
+/* ============ FOOTER ============ */
+.footer-bar {
+  margin-top: clamp(60px, 8vw, 100px);
+  border-top: 1px solid var(--line);
+  padding: 20px 0 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ============ TWEAKS PANEL ============ */
+#tweaks {
+  position: fixed;
+  right: 20px; bottom: 20px;
+  z-index: 500;
+  width: 280px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  font-family: var(--mono);
+  display: none;
+}
+#tweaks.open { display: block; }
+#tweaks > header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+#tweaks > header .ttl { color: var(--accent); }
+#tweaks > header button {
+  background: transparent; border: none; color: var(--text); cursor: pointer; font-family: var(--mono);
+}
+.tw-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.tw-row label {
+  display: block;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+.tw-seg, .tw-seg.three {
+  display: grid; gap: 4px;
+}
+.tw-seg { grid-template-columns: 1fr 1fr; }
+.tw-seg.three { grid-template-columns: repeat(3, 1fr); }
+.tw-seg button {
+  font-family: var(--mono); font-size: 10.5px;
+  padding: 7px;
+  background: transparent;
+  border: 1px solid var(--line-2);
+  color: var(--text-2);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tw-seg button.on { background: var(--accent); border-color: var(--accent); color: #0b0c0e; }
+.tw-swatches { display: flex; gap: 8px; }
+.tw-swatch {
+  width: 26px; height: 26px;
+  border: 1px solid var(--line-2);
+  cursor: pointer;
+  border-radius: 50%;
+}
+.tw-swatch.on { box-shadow: 0 0 0 2px var(--text); }
+
+::selection { background: var(--accent); color: #0b0c0e; }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ============ STATUS BAR ============ -->
+<header class="bar" data-screen-label="00 Bar">
+  <div class="bar-l">
+    <span><span class="dot"></span>STATUS_AVAIL</span>
+    <span class="sep">/</span>
+    <span class="id-pill">kornev_v</span>
+    <span class="latlong sep">·</span>
+    <span class="latlong">LAT 30.27 LON 120.15</span>
+  </div>
+  <nav class="bar-nav">
+    <a href="#about">01_about</a>
+    <a href="#work">02_work</a>
+    <a href="#stack">03_stack</a>
+    <a href="#contact">04_contact</a>
+  </nav>
+  <div class="bar-r">
+    <span class="build">build <span style="color:var(--text);">v2.6.4</span></span>
+    <span class="sep">/</span>
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ HERO ============ -->
+<section id="hero" class="crosshair">
+
+  <div class="h-meta-row">
+    <span><b>FIG. 01</b> · Model card</span>
+    <span>·</span>
+    <span>Updated 2026-05-25</span>
+    <span>·</span>
+    <span>Revision 014</span>
+    <span>·</span>
+    <span class="tag">// open to roles</span>
+  </div>
+
+  <div class="hero-grid">
+    <div>
+      <div class="h-pretitle"><span class="arrow">▸</span> ./profile --verbose</div>
+      <h1 class="h-name">vladimir<br><span class="accent">.kornev</span><span class="blink"></span></h1>
+      <div class="h-role">
+        <span>Data Scientist</span>
+        <span class="pipe">/</span>
+        <span>Data Analyst</span>
+        <span class="badge">2 yr 3 mo · exp</span>
+        <span class="badge">remote-ready</span>
+      </div>
+
+      <div class="h-config">
+        <span class="head">/// CONFIG</span>
+<span class="c"># initialization</span>
+<span class="k">role</span>        = <span class="v">"data_scientist"</span>
+<span class="k">experience</span>  = <span class="s">"2 yr 3 mo"</span>  <span class="c"># since Mar 2024</span>
+<span class="k">stack</span>       = [<span class="v">"python"</span>, <span class="v">"sql"</span>, <span class="v">"pytorch"</span>, <span class="v">"airflow"</span>]
+<span class="k">interests</span>   = [<span class="v">"ml_systems"</span>, <span class="v">"pipelines"</span>, <span class="v">"causal_inf"</span>]
+<span class="k">timezone</span>    = <span class="v">"Asia/Shanghai (UTC+8)"</span>
+<span class="k">availability</span>= <span class="s">True</span>
+      </div>
+
+      <div class="h-cta">
+        <a class="btn" href="#contact">
+          <span>contact</span> <span class="b-arr">↗</span>
+        </a>
+        <a class="btn ghost" href="#work">
+          <span>./view_work.sh</span> <span class="b-arr">→</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="h-right">
+      <figure class="figure portrait-fig">
+        <img src="IMG_5974_3.jpg" alt="Vladimir Kornev">
+      </figure>
+    </div>
+  </div>
+
+  <!-- stats strip -->
+  <div class="stats">
+    <div class="stat">
+      <div class="label">YRS_EXPERIENCE</div>
+      <div class="num">2.3<span class="u">yrs</span></div>
+      <svg class="sparkline" viewBox="0 0 120 26" preserveAspectRatio="none">
+        <polyline fill="none" stroke="var(--accent)" stroke-width="1.4" points="0,22 12,20 24,17 36,18 48,14 60,11 72,9 84,8 96,5 108,4 120,3"/>
+        <circle cx="120" cy="3" r="2.5" fill="var(--accent)"/>
+      </svg>
+      <div class="delta">▲ trending up</div>
+    </div>
+    <div class="stat">
+      <div class="label">EXPERIMENTS_RUN</div>
+      <div class="num">40<span class="u">+</span></div>
+      <svg class="sparkline" viewBox="0 0 120 26" preserveAspectRatio="none">
+        <g fill="var(--accent)">
+          <rect x="2"  y="22" width="6" height="3"/>
+          <rect x="14" y="19" width="6" height="6"/>
+          <rect x="26" y="16" width="6" height="9"/>
+          <rect x="38" y="18" width="6" height="7"/>
+          <rect x="50" y="12" width="6" height="13"/>
+          <rect x="62" y="10" width="6" height="15"/>
+          <rect x="74" y="6"  width="6" height="19"/>
+          <rect x="86" y="8"  width="6" height="17"/>
+          <rect x="98" y="3"  width="6" height="22"/>
+          <rect x="110" y="1" width="6" height="24"/>
+        </g>
+      </svg>
+      <div class="delta">+ 18 this year</div>
+    </div>
+    <div class="stat">
+      <div class="label">DATASETS_ANALYSED</div>
+      <div class="num">25<span class="u">total</span></div>
+      <svg class="sparkline" viewBox="0 0 120 26" preserveAspectRatio="none">
+        <polyline fill="none" stroke="var(--accent)" stroke-width="1.4"
+          points="0,20 10,17 20,19 30,13 40,15 50,9 60,11 70,7 80,10 90,5 100,7 110,4 120,6"/>
+      </svg>
+      <div class="delta">avg 3 / quarter</div>
+    </div>
+    <div class="stat">
+      <div class="label">LANGUAGES</div>
+      <div class="num">3<span class="u">spoken</span></div>
+      <svg class="sparkline" viewBox="0 0 120 26" preserveAspectRatio="none">
+        <g fill="none" stroke="var(--accent)" stroke-width="1.2">
+          <circle cx="20" cy="13" r="9"/>
+          <circle cx="60" cy="13" r="9"/>
+          <circle cx="100" cy="13" r="9"/>
+        </g>
+        <g fill="var(--accent)" font-family="JetBrains Mono" font-size="9">
+          <text x="16" y="16">EN</text>
+          <text x="56" y="16">RU</text>
+          <text x="94" y="16">中</text>
+        </g>
+      </svg>
+      <div class="delta">en · ru · zh</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ § 01 ABOUT ============ -->
+<section id="about" class="sec" data-screen-label="01 About">
+  <div class="sec-head">
+    <div class="l">
+      <span class="num">§ 01</span>
+      <h2>profile <em>// abstract</em></h2>
+    </div>
+    <div class="r">3 paragraphs · ~310 words</div>
+  </div>
+
+  <div class="about-grid">
+    <div class="about-prose">
+      <p>
+        Data scientist with <strong>2 years and 3 months</strong> spent in the trenches of messy data — running experiments that hold, building models that explain, and analyses that answer the question actually being asked, not the one that's easy to chart.
+      </p>
+      <p>
+        My work spans the full pipeline: data extraction and engineering, model training, evaluation, and deployment. I lean toward <span class="accent-text">interpretable models</span>, <span class="accent-text">honest metrics</span>, and the unglamorous discipline of writing tests for things that shouldn't break.
+      </p>
+      <p>
+        Studied at <strong>Zhejiang University of Science and Technology</strong>. Comfortable across the stack — Python for everything, SQL for where the data lives, PyTorch when deep is warranted, and Airflow / MLflow to keep the lights on.
+      </p>
+    </div>
+
+    <div>
+      <div class="profile-card">
+        <header>
+          <span>profile.yaml</span>
+          <span>v2.6.4</span>
+        </header>
+        <div class="row"><span class="k">name</span><span class="v">Vladimir Kornev</span></div>
+        <div class="row"><span class="k">role</span><span class="v">Data Scientist</span></div>
+        <div class="row"><span class="k">edu</span><span class="v">ZUST — Bachelor of Science in Computer Science and Technology</span></div>
+        <div class="row"><span class="k">years</span><span class="v">2.3</span></div>
+        <div class="row"><span class="k">tz</span><span class="v">UTC+8</span></div>
+        <div class="row"><span class="k">avail</span><span class="v"><span class="ok">● true</span> <span class="tag">full / contract</span></span></div>
+      </div>
+
+      <div class="heatmap">
+        <div class="heatmap-head">
+          <span class="t">// commit activity — last 26 weeks</span>
+          <span id="hm-count">312 events</span>
+        </div>
+        <div class="heatmap-grid" id="hm-grid"></div>
+        <div class="heatmap-head" style="margin-top:10px; margin-bottom:0;">
+          <span>less</span>
+          <span style="display:flex;gap:3px;">
+            <span class="hm-cell" style="background:color-mix(in oklab, var(--accent) 10%, transparent); width:10px;height:10px;"></span>
+            <span class="hm-cell" style="background:color-mix(in oklab, var(--accent) 30%, transparent); width:10px;height:10px;"></span>
+            <span class="hm-cell" style="background:color-mix(in oklab, var(--accent) 55%, transparent); width:10px;height:10px;"></span>
+            <span class="hm-cell" style="background:color-mix(in oklab, var(--accent) 80%, transparent); width:10px;height:10px;"></span>
+            <span class="hm-cell" style="background:var(--accent); width:10px;height:10px;"></span>
+          </span>
+          <span>more</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ § 02 WORK ============ -->
+<section id="work" class="sec" data-screen-label="02 Work">
+  <div class="sec-head">
+    <div class="l">
+      <span class="num">§ 02</span>
+      <h2>selected experiments <em>// n=1</em></h2>
+    </div>
+    <div class="r">2024 — 2025 · more on request</div>
+  </div>
+
+  <table class="work-table">
+    <thead>
+      <tr>
+        <th style="width:8%;">id</th>
+        <th>experiment</th>
+        <th style="width:18%;">stack</th>
+        <th style="width:18%;">primary metric</th>
+        <th style="width:9%;">status</th>
+        <th style="width:5%;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="work-row">
+        <td class="id">EXP_001<span class="yr">2025·Q1</span></td>
+        <td class="name">
+          <a href="https://github.com/Vladimir-Kornev/credit-risk-scoring" target="_blank" style="color:inherit;">Credit Risk Scoring</a>
+          <span class="desc">End-to-end credit default prediction on UCI dataset (30k customers, 22% default rate). DuckDB feature engineering from 6-month payment history — payment delays, bill amounts, utilisation ratios. LR / XGBoost / LightGBM compared in MLflow; SHAP global + local explainability. Structured as 3 narrative notebooks + reusable src/ package with 15 pytest unit tests.</span>
+        </td>
+        <td class="stack">
+          <span class="chip">DuckDB</span><span class="chip">scikit-learn</span><span class="chip">XGBoost</span><span class="chip">LightGBM</span><span class="chip">MLflow</span><span class="chip">SHAP</span><span class="chip">pytest</span>
+        </td>
+        <td class="metric">
+          <div class="metric-label">ROC-AUC (holdout)</div>
+          <div class="metric-val">0.778<span class="delta">Gini 0.556 · KS 0.432</span></div>
+          <svg class="metric-bar" viewBox="0 0 140 28">
+            <polyline fill="none" stroke="var(--mute)" stroke-width="1" stroke-dasharray="2 2" points="2,26 138,2"/>
+            <polyline fill="none" stroke="var(--accent)" stroke-width="1.6"
+              points="2,26 20,20 42,14 68,9 95,5 120,3 138,2"/>
+            <text x="64" y="26" font-family="JetBrains Mono" font-size="8" fill="var(--dim)">ROC curve</text>
+          </svg>
+        </td>
+        <td class="status"><span class="pill live">● DONE</span></td>
+        <td class="go"><a href="https://github.com/Vladimir-Kornev/credit-risk-scoring" target="_blank" style="color:inherit;"><span class="arr">↗</span></a></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ § 03 STACK ============ -->
+<section id="stack" class="sec" data-screen-label="03 Stack">
+  <div class="sec-head">
+    <div class="l">
+      <span class="num">§ 03</span>
+      <h2>capabilities <em>// proficiency curve</em></h2>
+    </div>
+    <div class="r">self-assessed · 0–100</div>
+  </div>
+
+  <div class="stack-grid">
+
+    <!-- A -->
+    <div class="stack-cell">
+      <h3><span class="id">A.</span> core language</h3>
+      <p>Python. Daily driver — analysis, modelling, and visualization end-to-end.</p>
+      <div class="skill-bar"><span class="name">Python</span><div class="track"><div class="fill" style="width:90%"></div></div><span class="pct">90 · adv</span></div>
+      <div class="skill-bar"><span class="name">Pandas / NumPy</span><div class="track"><div class="fill" style="width:88%"></div></div><span class="pct">88</span></div>
+      <div class="skill-bar"><span class="name">Matplotlib / Seaborn / Plotly</span><div class="track"><div class="fill" style="width:84%"></div></div><span class="pct">84</span></div>
+      <div class="skill-bar"><span class="name">ydata-profiling</span><div class="track"><div class="fill" style="width:76%"></div></div><span class="pct">76</span></div>
+    </div>
+
+    <!-- B -->
+    <div class="stack-cell">
+      <h3><span class="id">B.</span> data &amp; dev tools</h3>
+      <p>SQL across dialects plus the tooling that keeps work reproducible — version control, testing, and clean delivery.</p>
+      <div class="skill-bar"><span class="name">SQL (core)</span><div class="track"><div class="fill" style="width:85%"></div></div><span class="pct">85 · solid</span></div>
+      <div class="skill-bar"><span class="name">MySQL · DuckDB</span><div class="track"><div class="fill" style="width:82%"></div></div><span class="pct">82</span></div>
+      <div class="skill-bar"><span class="name">GitHub · pytest</span><div class="track"><div class="fill" style="width:80%"></div></div><span class="pct">80</span></div>
+      <div class="skill-bar"><span class="name">Tableau · Docker (basic)</span><div class="track"><div class="fill" style="width:75%"></div></div><span class="pct">75</span></div>
+    </div>
+
+    <!-- C -->
+    <div class="stack-cell">
+      <h3><span class="id">C.</span> ML &amp; experiments</h3>
+      <p>Gradient boosting for structured data, tracked with MLflow, explained with SHAP. Still building depth here.</p>
+      <div class="skill-bar"><span class="name">Scikit-learn</span><div class="track"><div class="fill" style="width:85%"></div></div><span class="pct">85</span></div>
+      <div class="skill-bar"><span class="name">XGBoost / LightGBM</span><div class="track"><div class="fill" style="width:60%"></div></div><span class="pct">60</span></div>
+      <div class="skill-bar"><span class="name">MLflow</span><div class="track"><div class="fill" style="width:60%"></div></div><span class="pct">60</span></div>
+      <div class="skill-bar"><span class="name">SHAP</span><div class="track"><div class="fill" style="width:70%"></div></div><span class="pct">70</span></div>
+    </div>
+
+    <!-- D -->
+    <div class="stack-cell">
+      <h3><span class="id">D.</span> statistics &amp; method</h3>
+      <p>The foundation underneath the libraries — the part that decides whether the result is actually true.</p>
+      <div class="skill-bar"><span class="name">Probability</span><div class="track"><div class="fill" style="width:80%"></div></div><span class="pct">80</span></div>
+      <div class="skill-bar"><span class="name">Hypothesis Testing / Scipy</span><div class="track"><div class="fill" style="width:78%"></div></div><span class="pct">78</span></div>
+      <div class="skill-bar"><span class="name">A/B testing</span><div class="track"><div class="fill" style="width:82%"></div></div><span class="pct">82</span></div>
+      <div class="skill-bar"><span class="name">Linear algebra</span><div class="track"><div class="fill" style="width:74%"></div></div><span class="pct">74</span></div>
+    </div>
+
+  </div>
+
+  <!-- language proficiency strip -->
+  <div class="langs">
+    <div class="lang">
+      <div class="ln">English <span class="iso">EN</span></div>
+      <div class="level">C1 — Fluent / working</div>
+      <div class="cefr">
+        <span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg"></span>
+      </div>
+      <div class="cefr-labels"><span>A1</span><span>A2</span><span>B1</span><span>B2</span><span>C1</span><span>C2</span></div>
+    </div>
+    <div class="lang">
+      <div class="ln">Russian <span class="iso">RU</span></div>
+      <div class="level">C2 — Native</div>
+      <div class="cefr">
+        <span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span>
+      </div>
+      <div class="cefr-labels"><span>A1</span><span>A2</span><span>B1</span><span>B2</span><span>C1</span><span>C2</span></div>
+    </div>
+    <div class="lang">
+      <div class="ln">中文 <span class="iso">ZH · HSK 4</span></div>
+      <div class="level">B1 — Conversational</div>
+      <div class="cefr">
+        <span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+      </div>
+      <div class="cefr-labels"><span>A1</span><span>A2</span><span>B1</span><span>B2</span><span>C1</span><span>C2</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ § 04 CONTACT ============ -->
+<section id="contact" class="sec" data-screen-label="04 Contact">
+  <div class="sec-head">
+    <div class="l">
+      <span class="num">§ 04</span>
+      <h2>contact <em>// inbound</em></h2>
+    </div>
+    <div class="r">avg response &lt; 24h</div>
+  </div>
+
+  <div class="contact-grid">
+    <div class="contact-prose">
+      <p class="big">
+        Have data that<br>
+        needs <em>// thinking</em>?<br>
+        Let's talk.
+      </p>
+      <a class="email-line" href="/cdn-cgi/l/email-protection#3e524b5d554748525f5a0609067e59535f5752105d5153">
+        <span class="__cf_email__" data-cfemail="59352c3a32202f35383d616e61193e34383035773a3634">[email&#160;protected]</span> <span>↗</span>
+      </a>
+    </div>
+
+    <div class="contact-card">
+      <span class="head">// channels</span>
+      <div><span class="ck">email&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="cv"><a href="/cdn-cgi/l/email-protection#f49881979f8d82989590ccc3ccb49399959d98da979b99"><span class="__cf_email__" data-cfemail="aac6dfc9c1d3dcc6cbce929d92eacdc7cbc3c684c9c5c7">[email&#160;protected]</span></a></span></div>
+      <div><span class="ck">github&nbsp;&nbsp;&nbsp;</span> <span class="cv"><a href="#">@vladkornev</a></span></div>
+      <div><span class="ck">wechat&nbsp;&nbsp;&nbsp;</span> <span class="cv">vlad_kornev</span></div>
+      <div><span class="ck">tz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="cv">UTC+8 · Asia/Shanghai</span></div>
+      <div><span class="ck">status&nbsp;&nbsp;&nbsp;</span> <span class="cv" style="color:var(--accent);">accepting inbound</span></div>
+      <div style="margin-top:14px; color:var(--dim); border-top:1px dashed var(--line); padding-top:10px;">
+        <span class="ck">// preferred subject lines:</span><br>
+        <span class="cv" style="color:var(--text-2);">"role · " &lt;company&gt; · &lt;stack&gt;</span><br>
+        <span class="cv" style="color:var(--text-2);">"project · " &lt;summary&gt;</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span>© 2026 · v.kornev · all rights reserved</span>
+    <span>built with python energy &amp; 24-hr coffee</span>
+    <span>// EOF</span>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ TWEAKS ============ -->
+<div id="tweaks">
+  <header>
+    <span><span class="ttl">// tweaks</span> · runtime</span>
+    <button id="tw-close" aria-label="Close">×</button>
+  </header>
+  <div class="tw-body">
+    <div class="tw-row">
+      <label>theme</label>
+      <div class="tw-seg" data-key="theme">
+        <button data-val="dark">dark</button>
+        <button data-val="light">light</button>
+      </div>
+    </div>
+    <div class="tw-row">
+      <label>accent</label>
+      <div class="tw-swatches" data-key="accent">
+        <span class="tw-swatch" data-val="#d4a445" style="background:#d4a445"></span>
+        <span class="tw-swatch" data-val="#6ab04c" style="background:#6ab04c"></span>
+        <span class="tw-swatch" data-val="#5db3b3" style="background:#5db3b3"></span>
+        <span class="tw-swatch" data-val="#c87dc8" style="background:#c87dc8"></span>
+        <span class="tw-swatch" data-val="#e85a4f" style="background:#e85a4f"></span>
+      </div>
+    </div>
+    <div class="tw-row">
+      <label>dot grid</label>
+      <div class="tw-seg" data-key="grid">
+        <button data-val="true">on</button>
+        <button data-val="false">off</button>
+      </div>
+    </div>
+    <div class="tw-row">
+      <label>density</label>
+      <div class="tw-seg" data-key="density">
+        <button data-val="compact">compact</button>
+        <button data-val="comfortable">comfortable</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ===== clock =====
+function tick() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const txt = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} UTC`;
+  const el = document.getElementById('clock');
+  if (el) el.textContent = txt;
+}
+tick(); setInterval(tick, 1000);
+
+// ===== heatmap (deterministic pseudo-random) =====
+(function() {
+  const grid = document.getElementById('hm-grid');
+  if (!grid) return;
+  // 7 rows × 26 weeks = 182 cells
+  let seed = 4242;
+  function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  // we'll render 26 weekly columns × 7 days but flatten as one grid of 7×26 — using 26 cols actually,
+  // build as 26 cells each containing 7 mini? Simpler: 26 cols × 7 rows via inline rows
+  grid.style.gridTemplateColumns = 'repeat(26, 1fr)';
+  grid.style.gridTemplateRows = 'repeat(7, 1fr)';
+  grid.style.gridAutoFlow = 'column';
+  for (let i = 0; i < 26 * 7; i++) {
+    const cell = document.createElement('span');
+    cell.className = 'hm-cell';
+    const v = rnd();
+    let bg;
+    if (v < 0.45) bg = 'color-mix(in oklab, var(--accent) 10%, transparent)';
+    else if (v < 0.7) bg = 'color-mix(in oklab, var(--accent) 30%, transparent)';
+    else if (v < 0.86) bg = 'color-mix(in oklab, var(--accent) 55%, transparent)';
+    else if (v < 0.96) bg = 'color-mix(in oklab, var(--accent) 80%, transparent)';
+    else bg = 'var(--accent)';
+    cell.style.background = bg;
+    grid.appendChild(cell);
+  }
+})();
+
+// ===== nav active state =====
+const sections = ['about','work','stack','contact'].map(id => document.getElementById(id));
+const navLinks = [...document.querySelectorAll('.bar-nav a')];
+function onScroll() {
+  const y = window.scrollY + 120;
+  let active = '';
+  sections.forEach(s => { if (s && s.offsetTop <= y) active = s.id; });
+  navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + active));
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+
+// ===== smooth anchor offset =====
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1);
+    const t = document.getElementById(id);
+    if (!t) return;
+    e.preventDefault();
+    window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+  });
+});
+
+// ===== Tweaks =====
+const TW = Object.assign({}, window.__TWEAK_DEFAULTS);
+
+function applyTweaks() {
+  document.body.dataset.theme = TW.theme;
+  document.documentElement.style.setProperty('--accent', TW.accent);
+  // derive a brighter accent-2 from accent
+  document.documentElement.style.setProperty('--accent-2', TW.accent);
+  document.body.classList.toggle('no-grid', !(TW.grid === true || TW.grid === 'true'));
+  document.body.style.fontSize = TW.density === 'compact' ? '14px' : '15px';
+  document.querySelectorAll('#tweaks [data-key]').forEach(group => {
+    const key = group.dataset.key;
+    group.querySelectorAll('[data-val]').forEach(b => {
+      b.classList.toggle('on', String(TW[key]) === String(b.dataset.val));
+    });
+  });
+}
+applyTweaks();
+
+function setTweak(k, v) {
+  if (v === 'true') v = true; else if (v === 'false') v = false;
+  TW[k] = v;
+  applyTweaks();
+  try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*'); } catch(e){}
+}
+
+document.querySelectorAll('#tweaks [data-key]').forEach(group => {
+  const key = group.dataset.key;
+  group.querySelectorAll('[data-val]').forEach(btn => {
+    btn.addEventListener('click', () => setTweak(key, btn.dataset.val));
+  });
+});
+
+// ===== Tweaks panel show/hide =====
+const panel = document.getElementById('tweaks');
+window.addEventListener('message', e => {
+  const d = e.data || {};
+  if (d.type === '__activate_edit_mode') panel.classList.add('open');
+  if (d.type === '__deactivate_edit_mode') panel.classList.remove('open');
+});
+document.getElementById('tw-close').addEventListener('click', () => {
+  panel.classList.remove('open');
+  try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch(e){}
+});
+try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch(e){}
+</script>
+
+</body>
+</html>
