@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "personal-web",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3458"],
+      "port": 3458
+    },
+    {
+      "name": "mostok",
+      "runtimeExecutable": "/usr/bin/python3",
+      "runtimeArgs": ["-c", "import os; os.chdir('/tmp/mostok-site'); import http.server, socketserver; socketserver.TCPServer.allow_reuse_address = True; httpd = socketserver.TCPServer(('127.0.0.1', 4174), http.server.SimpleHTTPRequestHandler); httpd.serve_forever()"],
+      "port": 4174
+    }
+  ]
+}
