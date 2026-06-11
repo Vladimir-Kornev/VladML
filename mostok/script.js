@@ -11,7 +11,7 @@ function setLang(lang) {
   );
 }
 
-setLang(localStorage.getItem('mostok-lang') || 'en');
+setLang(localStorage.getItem('mostok-lang') || 'ru');
 
 toggle.addEventListener('click', () =>
   setLang(html.getAttribute('data-lang') === 'en' ? 'ru' : 'en')
@@ -28,7 +28,7 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: 0.12 });
 
 document
-  .querySelectorAll('.section-head, .barrier, .service, .steps li, .production-inner, .contact-grid')
+  .querySelectorAll('.section-head, .barrier, .service, .strategy, .steps li, .production-inner, .trust-grid, .faq-list details, .contact-grid')
   .forEach(el => observer.observe(el));
 
 // contact form -> mailto (no backend yet)
